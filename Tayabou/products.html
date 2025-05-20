@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Concert Ticket QR Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(to right, #57668f, #15154f);
+      color: #333;
+      transition: background 0.3s ease;
+    }
+
+    h1 {
+      text-align: center;
+      color: #1f2937;
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      animation: fadeInDown 1s ease;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    .form-section, .ticket-preview {
+      background: url(IMG-20250519-WA0002.jpg);
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+      width: 100%;
+      max-width: 420px;
+      transition: transform 0.3s ease;
+      animation: fadeInUp 1.2s ease;
+    }
+
+    .form-section:hover, .ticket-preview:hover {
+      transform: translateY(-5px);
+    }
+
+    label {
+      display: block;
+      margin: 12px 0 6px;
+      font-weight: 600;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+    }
+
+    input:focus {
+      border-color: #2563eb;
+      outline: none;
+    }
+
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-right: 10px;
+      transition: background 0.3s ease, transform 0.2s;
+    }
+
+    button:hover {
+      background-color: #1e40af;
+      transform: scale(1.03);
+    }
+
+    .ticket {
+      border: 2px dashed #a0aec0;
+      padding: 20px;
+      border-radius: 14px;
+      background: #fff;
+      text-align: center;
+      position: relative;
+      transition: all 0.3s ease-in-out;
+    }
+
+    #preview-image {
+      width: 100%;
+      max-height: 180px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      animation: fadeIn 1s ease;
+    }
+
+    #qrcode {
+      margin-top: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎟️ Concert Ticket QR Generator</h1>
+
+<div class="container">
+  <div class="form-section">
+    <h2>Enter Details</h2>
+    <form id="ticketForm">
+      <label>Name:</label>
+      <input type="text" id="name" required />
+
+      <label>Email:</label>
+      <input type="email" id="email" required />
+
+      <label>Seat Number:</label>
+      <input type="text" id="seat" required />
+
+      <label>Upload Photo:</label>
+      <input type="file" id="photo" accept="image/*" />
+
+      <button type="submit">Generate</button>
+      <button type="button" onclick="downloadPDF()">Download</button>
+    </form>
+  </div>
+
+  <div class="ticket-preview">
+    <h2>Ticket Preview</h2>
+    <div class="ticket" id="ticket">
+      <img id="preview-image" src="" alt="User Photo" />
+      <p><strong>Name:</strong> <span id="preview-name"></span></p>
+      <p><strong>Email:</strong> <span id="preview-email"></span></p>
+      <p><strong>Seat:</strong> <span id="preview-seat"></span></p>
+      <div id="qrcode"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+<script>
+document.getElementById('ticketForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const seat = document.getElementById('seat').value.trim();
+
+  document.getElementById('preview-name').textContent = name;
+  document.getElementById('preview-email').textContent = email;
+  document.getElementById('preview-seat').textContent = seat;
+
+  const photoInput = document.getElementById('photo');
+  if (photoInput.files && photoInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      document.getElementById('preview-image').src = e.target.result;
+    };
+    reader.readAsDataURL(photoInput.files[0]);
+  }
+
+  const qrData = JSON.stringify({ name, email, seat });
+  document.getElementById('qrcode').innerHTML = '';
+  new QRCode(document.getElementById('qrcode'), {
+    text: qrData,
+    width: 128,
+    height: 128,
+    correctLevel: QRCode.CorrectLevel.H
+  });
+});
+
+function downloadPDF() {
+  const ticket = document.getElementById("ticket");
+  html2canvas(ticket).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'concert_ticket.png';
+    link.href = canvas.toDataURL();
+    link.click();
+  });
+}
+</script>
+
+</body>
+</html>
